@@ -2,6 +2,7 @@ use std::net::{Ipv4Addr, UdpSocket};
 use rocket::http::Status;
 use rusty_sonos::speaker::{BasicSpeakerInfo, Speaker};
 use serde_json::json;
+use regex::Regex;
 
 pub async fn get_local_ip() -> std::io::Result<String> {
     // Create a UDP socket
@@ -21,9 +22,14 @@ pub async fn get_local_ip() -> std::io::Result<String> {
 }
 
 pub fn serialize_speaker_info(speaker_info: &BasicSpeakerInfo) -> String {
+    let re = Regex::new(r"- (.+?) -").unwrap();
+    let hay = speaker_info.friendly_name();
+    let caps = re.captures(hay).unwrap();
+    let captured_name = &caps[1];
+
     let json_object = json!({
         "name": speaker_info.friendly_name(),
-        "room": speaker_info.room_name(),
+        "room": captured_name,
         "ip_address": speaker_info.ip_addr(),
         "uuid": speaker_info.uuid(),
     });

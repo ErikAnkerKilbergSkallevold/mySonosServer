@@ -18,23 +18,6 @@ use crate::error_routes::{internal_error, not_found};
 use crate::routes::{get_devices, get_sound_uri, index, play_sound};
 use crate::sonos::return_devices;
 
-async fn handle_request(zone: &str, song: &str) -> Result<String, Box<dyn Error>> {
-    // Specify the path to the Python script relative to the Rust project's root directory
-    let output = Command::new("py")
-        .arg("main.py") // Adjust the path as necessary
-        .arg(zone) // First parameter: room name
-        .arg("--filename") // Second parameter: filename flag
-        .arg(song) // Third parameter: filename value
-        .output()
-        .expect("Failed to execute Python script");
-
-    dbg!(&output);
-    task::sleep(Duration::from_millis(1000)).await;
-    let response_body = format!("Python script output: {}", String::from_utf8_lossy(&output.stdout));
-
-    Ok(response_body)
-}
-
 #[launch]
 async fn rocket() -> _ {
     // Initialize the speaker list on launch
