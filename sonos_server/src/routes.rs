@@ -7,6 +7,7 @@ use rocket::http::Status;
 
 use crate::sonos::return_devices;
 use rayon::prelude::*;
+use regex::Regex;
 use rusty_sonos::speaker::{Speaker};
 use serde_json::Value;
 use tokio::fs;
@@ -95,15 +96,19 @@ pub async fn get_sound_uri(sound: &str) -> Result<String, Status> {
 
 #[get("/devices")]
 pub async fn get_devices() -> Result<String, Status> {
-    match return_devices(30000, 2000).await {
+    match return_devices(10000, 2000).await {
         Ok(speaker_info_vec) => {
             // Iterate over each BasicSpeakerInfo and format it into a string.
             let speaker_info_strings: Vec<String> = speaker_info_vec.into_par_iter()
                 .map(|speaker_info| {
+                    let re = Regex::new(r"- (.+?) -").unwrap();
+                    let hay = speaker_info.friendly_name();
+                    let caps = re.captures(hay).unwrap();
+                    let captured_name = &caps[1];
                     format!(
                         "IP: {}, Friendly Name: {}, Room Name: {}, UUID: {}",
                         speaker_info.ip_addr(),
-                        speaker_info.friendly_name(),
+                        captured_name,
                         speaker_info.room_name(),
                         speaker_info.uuid()
                     )
