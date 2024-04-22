@@ -1,11 +1,12 @@
 use std::error::Error;
 use std::time::Duration;
 use rayon::prelude::*;
+use rocket::http::Status;
 use rusty_sonos::discovery::discover_devices;
-use rusty_sonos::speaker::BasicSpeakerInfo;
+use rusty_sonos::speaker::{BasicSpeakerInfo, Speaker};
 use tokio::io::AsyncWriteExt;
 use tokio::fs::{File};
-use crate::utils::serialize_speaker_info;
+use crate::utils::{create_sound_uri, format_speaker_name, serialize_speaker_info};
 
 
 pub async fn return_devices(search_timeout_ms: u64, read_timeout_ms: u64) -> Result<Vec<BasicSpeakerInfo>, Box<dyn Error>> {
@@ -27,4 +28,71 @@ pub async fn return_devices(search_timeout_ms: u64, read_timeout_ms: u64) -> Res
             Err(Box::try_from(e).unwrap())
         }
     }
+}
+
+pub async fn play_sound_on_sonos(speaker_room: &str, speaker_name: &str, sound: &str) -> Result<(), Status> {
+    let speakers = match return_devices(3000, 1000).await {
+        Ok(data) => data,
+        Err(_) => return Err(Status::InternalServerError),
+    };
+    dbg!(&speakers);
+
+    let speaker_info = match speakers.iter().find(|speaker| {
+        format_speaker_name(speaker.friendly_name()).unwrap() == speaker_name && speaker.room_name() == speaker_room
+    }).ok_or(Status::InternalServerError) {
+        Ok(speaker) => speaker,
+        Err(_) => return Err(Status::InternalServerError),
+    };
+    dbg!(&speaker_info);
+
+    let ip_addr = speaker_info.ip_addr();
+    dbg!(&ip_addr);
+
+    // Create the Speaker object
+    let speaker = match Speaker::new(ip_addr).await {
+        Ok(speaker) => speaker,
+        Err(_) => return Err(Status::InternalServerError),
+    };
+
+    // Get sound URI
+    let sound_uri = match create_sound_uri(sound).await {
+        Ok(uri) => uri,
+        Err(_) => return Err(Status::NotFound),
+    };
+    dbg!(&sound_uri);
+
+    // Pause the speaker
+    /*
+    match speaker.pause().await {
+        Ok(_) => (),
+        Err(e) => {
+            dbg!(e);
+            return Err(Status::InternalServerError)
+        },
+    }
+    dbg!("paused");
+     */
+
+    // Set Volume 0-100
+    match speaker.set_volume(70).await {
+        Ok(_) => (),
+        Err(_) => return Err(Status::InternalServerError),
+    }
+    dbg!("volume");
+
+    // Set the song URI
+    match speaker.set_current_uri(sound_uri.as_str()).await {
+        Ok(_) => (),
+        Err(_) => return Err(Status::InternalServerError),
+    };
+    dbg!("sound_uri");
+
+    // Play
+    match speaker.play().await {
+        Ok(_) => (),
+        Err(_) => return Err(Status::InternalServerError),
+    };
+    dbg!("play");
+
+    Ok(())
 }
