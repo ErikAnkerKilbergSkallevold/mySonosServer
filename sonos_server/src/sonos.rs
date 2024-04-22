@@ -1,45 +1,58 @@
-use std::error::Error;
-use std::time::Duration;
+use crate::utils::{create_sound_uri, format_speaker_name, serialize_speaker_info};
 use rayon::prelude::*;
 use rocket::http::Status;
 use rusty_sonos::discovery::discover_devices;
 use rusty_sonos::speaker::{BasicSpeakerInfo, Speaker};
+use std::error::Error;
+use std::time::Duration;
+use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-use tokio::fs::{File};
-use crate::utils::{create_sound_uri, format_speaker_name, serialize_speaker_info};
 
-
-pub async fn return_devices(search_timeout_ms: u64, read_timeout_ms: u64) -> Result<Vec<BasicSpeakerInfo>, Box<dyn Error>> {
+pub async fn return_devices(
+    search_timeout_ms: u64,
+    read_timeout_ms: u64,
+) -> Result<Vec<BasicSpeakerInfo>, Box<dyn Error>> {
     let search_timeout = Duration::from_millis(search_timeout_ms);
     let read_timeout = Duration::from_millis(read_timeout_ms);
 
     match discover_devices(search_timeout, read_timeout).await {
         Ok(speaker_info) => {
             // Serialize each BasicSpeakerInfo to a JSON string
-            let json_data: String = speaker_info.par_iter().map(serialize_speaker_info).collect::<Vec<String>>().join(",");
+            let json_data: String = speaker_info
+                .par_iter()
+                .map(serialize_speaker_info)
+                .collect::<Vec<String>>()
+                .join(",");
 
             // Write the JSON data to a file asynchronously
             let mut file = File::create("./cache/speaker_info.json").await?;
             file.write_all(json_data.as_bytes()).await?;
 
             Ok(speaker_info)
-        },
-        Err(e) => {
-            Err(Box::try_from(e).unwrap())
         }
+        Err(e) => Err(Box::from(e)),
     }
 }
 
-pub async fn play_sound_on_sonos(speaker_room: &str, speaker_name: &str, sound: &str) -> Result<(), Status> {
+pub async fn play_sound_on_sonos(
+    speaker_room: &str,
+    speaker_name: &str,
+    sound: &str,
+) -> Result<(), Status> {
     let speakers = match return_devices(3000, 1000).await {
         Ok(data) => data,
         Err(_) => return Err(Status::InternalServerError),
     };
     dbg!(&speakers);
 
-    let speaker_info = match speakers.iter().find(|speaker| {
-        format_speaker_name(speaker.friendly_name()).unwrap() == speaker_name && speaker.room_name() == speaker_room
-    }).ok_or(Status::InternalServerError) {
+    let speaker_info = match speakers
+        .iter()
+        .find(|speaker| {
+            format_speaker_name(speaker.friendly_name()).unwrap() == speaker_name
+                && speaker.room_name() == speaker_room
+        })
+        .ok_or(Status::InternalServerError)
+    {
         Ok(speaker) => speaker,
         Err(_) => return Err(Status::InternalServerError),
     };

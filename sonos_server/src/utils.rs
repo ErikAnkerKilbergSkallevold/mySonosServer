@@ -1,25 +1,7 @@
-use std::net::{UdpSocket};
-use rocket::http::Status;
-use rusty_sonos::speaker::{BasicSpeakerInfo};
-use serde_json::json;
 use regex::Regex;
-
-pub async fn get_local_ip() -> std::io::Result<String> {
-    // Create a UDP socket
-    let socket = UdpSocket::bind("0.0.0.0:0")?;
-
-    // Connect to a remote address
-    let remote_addr = "8.8.8.8:80";
-    socket.connect(remote_addr)?;
-
-    // Get the local socket address
-    let local_addr = socket.local_addr()?;
-
-    // Extract the IP address as a string
-    let ip_address = local_addr.ip().to_string();
-
-    Ok(ip_address)
-}
+use rocket::http::Status;
+use rusty_sonos::speaker::BasicSpeakerInfo;
+use serde_json::json;
 
 pub fn serialize_speaker_info(speaker_info: &BasicSpeakerInfo) -> String {
     /*
@@ -47,8 +29,10 @@ pub fn format_speaker_name(speaker_name: &str) -> Result<String, Status> {
 }
 
 pub async fn create_sound_uri(sound: &str) -> Result<String, Status> {
-    let config = rocket::config::Config::figment().extract::<rocket::Config>().unwrap();
-    
+    let config = rocket::config::Config::figment()
+        .extract::<rocket::Config>()
+        .unwrap();
+
     let ip_addr = config.address;
     let port = config.port;
 

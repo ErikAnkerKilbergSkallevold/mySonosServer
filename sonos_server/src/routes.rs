@@ -1,9 +1,8 @@
-
 use crate::sonos::{play_sound_on_sonos, return_devices};
-use crate::utils::{create_sound_uri};
-use rocket::http::Status;
+use crate::utils::create_sound_uri;
 use rayon::prelude::*;
 use regex::Regex;
+use rocket::http::Status;
 
 #[get("/")]
 pub async fn index() -> &'static str {
@@ -11,21 +10,28 @@ pub async fn index() -> &'static str {
 }
 
 #[get("/play_sound/<speaker_room>/<speaker_name>/<sound>")]
-pub async fn play_sound(speaker_room: &str, speaker_name: &str, sound: &str) -> Result<String, Status> {
+pub async fn play_sound(
+    speaker_room: &str,
+    speaker_name: &str,
+    sound: &str,
+) -> Result<String, Status> {
     match play_sound_on_sonos(speaker_room, speaker_name, sound).await {
         Ok(_) => (),
         Err(e) => return Err(e),
     };
 
-    Ok(String::from(format!("Playing sound: {} on speaker: {} in room: {}", sound, speaker_name, speaker_room)))
+    Ok(format!(
+        "Playing sound: {} on speaker: {} in room: {}",
+        sound, speaker_name, speaker_room
+    ))
 }
 
 #[get("/sound/<sound>")]
 pub async fn get_sound_uri(sound: &str) -> Result<String, Status> {
-    return match create_sound_uri(sound).await {
+    match create_sound_uri(sound).await {
         Ok(uri) => Ok(uri),
-        Err(_) => return Err(Status::NotFound),
-    };
+        Err(_) => Err(Status::NotFound),
+    }
 }
 
 #[get("/devices")]
@@ -33,7 +39,8 @@ pub async fn get_devices() -> Result<String, Status> {
     match return_devices(5000, 1000).await {
         Ok(speaker_info_vec) => {
             // Iterate over each BasicSpeakerInfo and format it into a string.
-            let speaker_info_strings: Vec<String> = speaker_info_vec.into_par_iter()
+            let speaker_info_strings: Vec<String> = speaker_info_vec
+                .into_par_iter()
                 .map(|speaker_info| {
                     let re = Regex::new(r"- (.+?) -").unwrap();
                     let hay = speaker_info.friendly_name();
@@ -53,9 +60,7 @@ pub async fn get_devices() -> Result<String, Status> {
             let all_speaker_info = speaker_info_strings.join("\n");
 
             Ok(all_speaker_info)
-        },
+        }
         Err(_) => Err(Status::InternalServerError),
     }
 }
-
-
