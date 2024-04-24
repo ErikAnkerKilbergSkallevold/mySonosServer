@@ -17,7 +17,7 @@ const char* ssid = "Appfarm";
 const char* password = "ObjectInContext";
 
 const char* urls[] = {
-  "192.168.0.183:1337/api/play_sound/Living%20Room/Sonos%20Arc/40/blue_button.mp3"
+  "192.168.0.183:1337/api/play_sound/Living%20Room/Sonos%20Arc/10/blue_button.mp3"
   // "192.168.0.183:1337/api/play_sound/Living%20Room/Sonos%20Arc/blue_button.mp3"
 };
 
