@@ -9,13 +9,14 @@ pub async fn index() -> &'static str {
     "Hello, World!"
 }
 
-#[get("/play_sound/<speaker_room>/<speaker_name>/<sound>")]
+#[get("/play_sound/<speaker_room>/<speaker_name>/<volume>/<sound>")]
 pub async fn play_sound(
     speaker_room: &str,
     speaker_name: &str,
+    volume: u8,
     sound: &str,
 ) -> Result<String, Status> {
-    match play_sound_on_sonos(speaker_room, speaker_name, sound).await {
+    match play_sound_on_sonos(speaker_room, speaker_name, volume, sound).await {
         Ok(_) => (),
         Err(e) => return Err(e),
     };

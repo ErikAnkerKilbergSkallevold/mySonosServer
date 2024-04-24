@@ -37,6 +37,7 @@ pub async fn return_devices(
 pub async fn play_sound_on_sonos(
     speaker_room: &str,
     speaker_name: &str,
+    volume: u8,
     sound: &str,
 ) -> Result<(), Status> {
     let speakers = match return_devices(3000, 1000).await {
@@ -87,7 +88,7 @@ pub async fn play_sound_on_sonos(
      */
 
     // Set Volume 0-100
-    match speaker.set_volume(70).await {
+    match speaker.set_volume(volume).await {
         Ok(_) => (),
         Err(_) => return Err(Status::InternalServerError),
     }
