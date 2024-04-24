@@ -40,7 +40,7 @@ pub async fn play_sound_on_sonos(
     volume: u8,
     sound: &str,
 ) -> Result<(), Status> {
-    let speakers = match return_devices(3000, 1000).await {
+    let speakers = match return_devices(700, 200).await {
         Ok(data) => data,
         Err(_) => return Err(Status::InternalServerError),
     };

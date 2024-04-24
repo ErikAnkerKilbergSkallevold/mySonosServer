@@ -37,7 +37,7 @@ pub async fn get_sound_uri(sound: &str) -> Result<String, Status> {
 
 #[get("/devices")]
 pub async fn get_devices() -> Result<String, Status> {
-    match return_devices(5000, 1000).await {
+    match return_devices(700, 200).await {
         Ok(speaker_info_vec) => {
             // Iterate over each BasicSpeakerInfo and format it into a string.
             let speaker_info_strings: Vec<String> = speaker_info_vec
