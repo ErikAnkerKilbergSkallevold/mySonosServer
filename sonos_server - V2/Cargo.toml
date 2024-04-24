@@ -1,0 +1,17 @@
+[package]
+name = "sonos_server"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-std = "1.12.0"
+rayon = "1.10.0"
+rocket = { version = "0.5.0", features = ["json"] }
+rusty-sonos = "0.2.5"
+tokio = "1.37.0"
+serde_json = "1.0.116"
+serde = { version = "1.0.198", features = ["derive"] }
+regex = "1.10.4"
+sonor = "2.0.0"

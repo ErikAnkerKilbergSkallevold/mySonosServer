@@ -1,0 +1,9 @@
+[global]
+port = 1336
+limits = { json = "10MiB", file = "200MiB" }
+
+[debug]
+address = "127.0.0.1"
+
+[release]
+address = "192.168.0.138"
