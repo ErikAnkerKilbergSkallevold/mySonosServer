@@ -29,7 +29,7 @@ pub async fn play_sound_in_rooms(request_body: Json<RequestBody<'_>>) -> String 
 
     for roomname in request_body.0.roomnames {
         // Find all speakers with roomname
-        let speaker = match find_speaker(&roomname, 800).await {
+        let speaker = match find_speaker(&roomname, 1000).await {
             Ok(speaker) => match speaker {
                 Some(speaker) => speaker,
                 _ => return "No speaker found".to_string(),
@@ -71,16 +71,18 @@ pub async fn play_sound_in_rooms(request_body: Json<RequestBody<'_>>) -> String 
             Ok(_) => (),
             Err(e) => return e.to_string(),
         };
-
+        
+        /*
         // Restore snapshot
         match apply_snapshot(&speaker, snapshot).await {
             Ok(_) => (),
             Err(e) => return e.to_string(),
         };
+         */
 
         result.push_str(&format!(
-            "Playing {} in room: {} at volume: {}\n",
-            sound, roomname, volume
+            "Playing {} with uri: {} on speaker {:?} in room: {} at volume: {}\n",
+            sound, &sound_uri, speaker, roomname, volume
         ));
     }
     result
