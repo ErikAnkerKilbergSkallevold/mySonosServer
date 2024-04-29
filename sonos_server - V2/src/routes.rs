@@ -1,3 +1,4 @@
+use std::time::Duration;
 use crate::sonos::Speakercontrols::{Pause, Play};
 use crate::sonos::{
     apply_snapshot, control_speaker, find_speaker, set_song, set_volume, take_snapshot,
@@ -6,6 +7,8 @@ use crate::utils::create_sound_uri;
 use rocket::http::Status;
 use rocket::serde::json::Json;
 use rocket::serde::Deserialize;
+use tokio::time::sleep;
+use crate::lofty::get_sound_duration_ms;
 
 #[derive(Deserialize)]
 pub struct RequestBody<'a> {
@@ -71,14 +74,19 @@ pub async fn play_sound_in_rooms(request_body: Json<RequestBody<'_>>) -> String 
             Ok(_) => (),
             Err(e) => return e.to_string(),
         };
+
+        // Sleep until the song is over 
+        let duration = match get_sound_duration_ms(sound).await {
+            Ok(duration) => duration,
+            Err(e) => return e.to_string(),
+        };
+        sleep(Duration::from_millis(duration as u64)).await;
         
-        /*
         // Restore snapshot
         match apply_snapshot(&speaker, snapshot).await {
             Ok(_) => (),
             Err(e) => return e.to_string(),
         };
-         */
 
         result.push_str(&format!(
             "Playing {} with uri: {} on speaker {:?} in room: {} at volume: {}\n",
@@ -133,12 +141,20 @@ pub async fn play_sound_in_room(roomname: &str, volume: u16, sound: &str) -> Str
         Ok(_) => (),
         Err(e) => return e.to_string(),
     };
+    
+    // Sleep until the song is over 
+    let duration = match get_sound_duration_ms(sound).await {
+        Ok(duration) => duration,
+        Err(e) => return e.to_string(),
+    };
+    sleep(Duration::from_millis(duration as u64)).await;
 
     // Restore snapshot
     match apply_snapshot(&speaker, snapshot).await {
         Ok(_) => (),
         Err(e) => return e.to_string(),
     };
+    
     return format!(
         "Playing sound: {} in room: {} at volume: {}",
         &sound_uri, &roomname, volume

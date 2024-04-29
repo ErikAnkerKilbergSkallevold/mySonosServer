@@ -3,7 +3,7 @@ port = 1336
 limits = { json = "10MiB", file = "200MiB" }
 
 [debug]
-address = "192.168.0.138"
+address = "192.168.1.222"
 
 [release]
-address = "192.168.0.138"
+address = "192.168.1.222"

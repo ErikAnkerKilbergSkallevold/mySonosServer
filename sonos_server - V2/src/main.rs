@@ -1,4 +1,5 @@
 mod error_routes;
+mod lofty;
 mod routes;
 mod sonos;
 mod utils;
